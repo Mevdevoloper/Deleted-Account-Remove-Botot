@@ -1,6 +1,8 @@
 import logging
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import Bot, Update, URL
+
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -9,7 +11,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 BOT_TOKEN = '5811021488:AAHNTgLlQSEAmk57qYCqBuFiGvb8Vd8iuss'
 
 # Create a bot instance
-bot = Bot(token=BOT_TOKEN)
+bot = Bot(token=BOT_TOKEN, base_url=URL("https://d-bot-wykt.onrender.com"))
 
 # Define the command handlers
 def start(update: Update, context):
