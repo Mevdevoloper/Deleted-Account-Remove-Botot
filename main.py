@@ -76,4 +76,28 @@ def get_channel_subscribers():
     subscribers = ['username1', 'username2', 'username3']  # Replace with your actual logic
     return subscribers
 
-def unknown_command(update
+def unknown_command(update: Update, context):
+    """Handler for unknown commands"""
+    update.message.reply_text("Sorry, I didn't understand that command.")
+
+def main():
+    """Main function to start the bot"""
+    # Create an instance of the Updater
+    updater = Updater(token=BOT_TOKEN, use_context=True)
+
+    # Get the dispatcher to register handlers
+    dispatcher = updater.dispatcher
+
+    # Register the command handlers
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("force_subscribe", force_subscribe))
+    dispatcher.add_handler(CommandHandler("remove_deleted", remove_deleted_accounts))
+    dispatcher.add_handler(CommandHandler("remove_inactive", remove_inactive_accounts))
+    dispatcher.add_handler(MessageHandler(Filters.command, unknown_command))
+
+    # Start the bot
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
