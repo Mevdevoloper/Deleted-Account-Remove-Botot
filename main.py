@@ -1,102 +1,60 @@
 import logging
-import os
-import time
-from telegram import Bot, Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler
+from telegram import ParseMode
 
-# Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# Set up logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Define the bot token
-BOT_TOKEN = os.getenv('5811021488:AAHNTgLlQSEAmk57qYCqBuFiGvb8Vd8iuss')
-CHANNEL_USERNAME = os.getenv('CodeMasterTG')
-ADMIN_ID = os.getenv('1848882121')
+# Global variable to store the channel ID
+channel_id = None
 
-# Create a bot instance
-bot = Bot(token=BOT_TOKEN)
+def start(update, context):
+    """Handler for the /start command."""
+    update.message.reply_text('Welcome to the Channel Subscriber Bot!')
 
-# Define the command handlers
-def start(update: Update, context):
-    """Handler for the /start command"""
-    user = update.effective_user
-    if user:
-        context.bot.send_message(chat_id=user.id, text="Welcome to the bot! Make sure to subscribe to the channel.")
+def set_channel(update, context):
+    """Handler for the /setchannel command."""
+    global channel_id
+    channel_id = update.message.chat_id
+    update.message.reply_text('Channel set successfully!')
 
-def force_subscribe(update: Update, context):
-    """Handler for the /force_subscribe command"""
-    user = update.effective_user
-    if user:
-        if user.username in get_channel_subscribers():
-            context.bot.send_message(chat_id=user.id, text="You are already subscribed to the channel.")
-        else:
-            context.bot.send_message(chat_id=user.id, text="Please subscribe to the channel first.")
-            context.bot.send_message(chat_id=user.id, text=f"Click here to subscribe: t.me/{CHANNEL_USERNAME}")
-
-def remove_deleted_accounts(update: Update, context):
-    """Handler for the /remove_deleted command"""
-    user = update.effective_user
-    if user.id == int(ADMIN_ID):
-        chat_id = update.effective_chat.id
-        members = bot.get_chat_members(chat_id)
-        deleted_accounts = []
-        for member in members:
-            if member.user.is_deleted:
-                deleted_accounts.append(member.user.id)
-        if deleted_accounts:
-            bot.kick_chat_members(chat_id, deleted_accounts)
-            context.bot.send_message(chat_id=user.id, text=f"Removed {len(deleted_accounts)} deleted accounts.")
-        else:
-            context.bot.send_message(chat_id=user.id, text="No deleted accounts found.")
+def get_subscriber_count(update, context):
+    """Handler for the /subscribers command."""
+    global channel_id
+    if channel_id:
+        subscribers = context.bot.get_chat_members_count(channel_id)
+        update.message.reply_text(f'The current subscriber count is: {subscribers}')
     else:
-        context.bot.send_message(chat_id=user.id, text="You are not authorized to use this command.")
+        update.message.reply_text('Please set the channel first using /setchannel')
 
-def remove_inactive_accounts(update: Update, context):
-    """Handler for the /remove_inactive command"""
-    user = update.effective_user
-    if user.id == int(ADMIN_ID):
-        chat_id = update.effective_chat.id
-        members = bot.get_chat_members(chat_id)
-        inactive_accounts = []
-        current_time = int(time.time())
-        for member in members:
-            last_seen_time = member.user.last_seen.date
-            if last_seen_time and (current_time - last_seen_time) > 2592000:  # 30 days in seconds
-                inactive_accounts.append(member.user.id)
-        if inactive_accounts:
-            bot.kick_chat_members(chat_id, inactive_accounts)
-            context.bot.send_message(chat_id=user.id, text=f"Removed {len(inactive_accounts)} inactive accounts.")
-        else:
-            context.bot.send_message(chat_id=user.id, text="No inactive accounts found.")
-    else:
-        context.bot.send_message(chat_id=user.id, text="You are not authorized to use this command.")
-
-def get_channel_subscribers():
-    """Function to get the list of channel subscribers"""
-    # Implement the logic to fetch the list of channel subscribers
-    subscribers = ['username1', 'username2', 'username3']  # Replace with your actual logic
-    return subscribers
-
-def unknown_command(update: Update, context):
-    """Handler for unknown commands"""
-    update.message.reply_text("Sorry, I didn't understand that command.")
+def error(update, context):
+    """Log errors."""
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 def main():
-    """Main function to start the bot"""
-    # Create an instance of the Updater
-    updater = Updater(token=BOT_TOKEN, use_context=True)
+    # Set up the Telegram Bot token
+    token = 'YOUR_TELEGRAM_BOT_TOKEN'
+    
+    # Create the Updater and pass it your bot's token
+    updater = Updater(token, use_context=True)
 
     # Get the dispatcher to register handlers
-    dispatcher = updater.dispatcher
+    dp = updater.dispatcher
 
-    # Register the command handlers
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("force_subscribe", force_subscribe))
-    dispatcher.add_handler(CommandHandler("remove_deleted", remove_deleted_accounts))
-    dispatcher.add_handler(CommandHandler("remove_inactive", remove_inactive_accounts))
-    dispatcher.add_handler(MessageHandler(Filters.command, unknown_command))
+    # Add command handlers
+    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(CommandHandler('setchannel', set_channel))
+    dp.add_handler(CommandHandler('subscribers', get_subscriber_count))
+
+    # Log errors
+    dp.add_error_handler(error)
 
     # Start the bot
     updater.start_polling()
+
+    # Run the bot until you press Ctrl-C
     updater.idle()
 
 if __name__ == '__main__':
