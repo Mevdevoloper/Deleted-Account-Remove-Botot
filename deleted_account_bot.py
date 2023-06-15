@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 BOT_TOKEN = '5811021488:AAHNTgLlQSEAmk57qYCqBuFiGvb8Vd8iuss'
 
 # Create a bot instance
-bot = Bot(token=BOT_TOKEN, base_url=URL("https://d-bot-wlkr.onrender.com"))
+bot = Bot(token=BOT_TOKEN)
 
 # Define the command handlers
 def start(update: Update, context):
